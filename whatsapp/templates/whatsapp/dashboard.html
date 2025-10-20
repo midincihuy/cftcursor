@@ -1,0 +1,102 @@
+{% extends 'whatsapp/base.html' %}
+{% load static %}
+
+{% block title %}WhatsApp Chat Dashboard{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-40 p-6">
+    <div class="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-6">
+        
+
+        <!-- Left: Chat List -->
+        <div class="col-span-1 bg-gray-50 rounded-lg shadow-sm overflow-hidden">
+        <div class="px-6 py-4 border-b border-gray-200">
+            <h2 class="text-xl font-semibold text-gray-900">Chats</h2>
+        </div>
+        <div class="divide-y divide-gray-200" id="chat-list">
+            {% for item in chat_data %}
+            <div class="chat-item p-6 hover:bg-gray-50 cursor-pointer transition-colors"
+                data-chat-id="{{ item.chat.id }}">
+            <div class="flex items-center justify-between">
+                <div>
+                <h3 class="font-medium text-gray-900 truncate">{{ item.chat.name }}</h3>
+                <p class="text-gray-600 text-sm truncate">
+                    {% if item.latest_message.from_me %}
+                    <span class="text-blue-600 font-medium">You:</span>
+                    {% endif %}
+                    {{ item.latest_message.get_preview }}
+                </p>
+                </div>
+                <span class="text-xs text-gray-500">
+                {{ item.latest_message.timestamp|date:"M d, H:i" }}
+                </span>
+            </div>
+            </div>
+            {% endfor %}
+        </div>
+        </div>
+
+        <!-- Right: Chat Messages -->
+        <div class="col-span-2 bg-gray-100 rounded-lg shadow-sm p-6" id="chat-content">
+        <div class="h-full flex flex-col">
+            <div class="border-b pb-4 mb-4">
+            <h2 class="text-2xl font-bold text-gray-900" id="chat-title">Select a chat</h2>
+            <p class="text-gray-600 text-sm">Messages will appear here</p>
+            </div>
+            <div id="messages-container" class="flex-1 overflow-y-auto space-y-4">
+            <!-- Messages will load dynamically -->
+            </div>
+        </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const chatItems = document.querySelectorAll('.chat-item');
+  const chatTitle = document.getElementById('chat-title');
+  const messagesContainer = document.getElementById('messages-container');
+
+  chatItems.forEach(item => {
+    item.addEventListener('click', function() {
+      const chatId = this.dataset.chatId;
+
+      // Highlight active chat
+      document.querySelectorAll('.chat-item').forEach(el => el.classList.remove('bg-gray-100'));
+      this.classList.add('bg-gray-100');
+
+      // Load messages via fetch
+      fetch(`/whatsapp/api/chat/${chatId}`)
+        .then(response => response.json())
+        .then(data => {
+          chatTitle.textContent = data.chat_name;
+          messagesContainer.innerHTML = "";
+            console.log(data)
+            const msgEl = document.createElement('div');
+            msgEl.className = `p-3 rounded-lg max-w-lg ${
+              data.latest_message.from_me ? 'bg-blue-100 ml-auto' : 'bg-gray-100'
+            }`;
+            msgEl.textContent = data.latest_message.body;
+            messagesContainer.appendChild(msgEl);
+
+        //   data.latest_message.forEach(msg => {
+        //     const msgEl = document.createElement('div');
+        //     msgEl.className = `p-3 rounded-lg max-w-lg ${
+        //       msg.from_me ? 'bg-blue-100 ml-auto' : 'bg-gray-100'
+        //     }`;
+        //     msgEl.textContent = msg.body;
+        //     messagesContainer.appendChild(msgEl);
+        //   });
+
+          // Auto scroll to bottom
+          messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        });
+    });
+  });
+});
+
+
+</script>
+{% endblock %}

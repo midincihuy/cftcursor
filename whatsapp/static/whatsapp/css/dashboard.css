@@ -1,0 +1,80 @@
+body{
+    background-color: #C0C0C0;
+}
+
+.chat-item {
+    transition: background-color 0.2s ease-in-out;
+}
+
+.chat-item:hover {
+    background-color: #f9fafb;
+}
+
+.chat-details {
+    animation: slideDown 0.3s ease-in-out;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        max-height: 0;
+        overflow: hidden;
+    }
+    to {
+        opacity: 1;
+        max-height: 500px;
+        overflow: visible;
+    }
+}
+
+.animate-spin {
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* Custom profile picture fallback */
+.profile-picture-fallback {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+/* Responsive improvements */
+@media (max-width: 768px) {
+    .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .chat-item .flex {
+        flex-direction: column;
+        align-items: flex-start;
+        space-y: 3;
+    }
+    
+    .chat-item .flex > div:last-child {
+        width: 100%;
+        margin-top: 0.75rem;
+    }
+}
+
+/* Print styles */
+@media print {
+    .no-print {
+        display: none !important;
+    }
+    
+    .chat-details {
+        display: block !important;
+    }
+}
+
+#chat-list{
+    max-height:500px;
+    overflow-y: auto;
+}
