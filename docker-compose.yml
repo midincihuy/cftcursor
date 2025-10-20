@@ -12,25 +12,62 @@ services:
       - .env
     depends_on:
       - db
+      - waha
+    restart: always
 
   db:
+    restart: always
     image: postgres:15
-    environment:
-      POSTGRES_DB: mydb
-      POSTGRES_USER: myuser
-      POSTGRES_PASSWORD: mypassword
+    env_file:
+      - .env
     volumes:
       - postgres_data:/var/lib/postgresql/data
 
   pgadmin:
     image: dpage/pgadmin4
-    environment:
-      PGADMIN_DEFAULT_EMAIL: admin@admin.com
-      PGADMIN_DEFAULT_PASSWORD: admin
+    env_file:
+      - .env
     ports:
       - "5050:80"
     depends_on:
       - db
+    restart: always
+
+  waha:
+    restart: always
+    # https://waha.devlike.pro/docs/how-to/engines/#docker-images
+    # https://portal.devlike.pro/docker-image
+    # image: devlikeapro/waha-plus
+    # WAHA Core
+    image: devlikeapro/waha:latest
+
+    # Add "dns" if you have a problem with resolving "web.whatsapp.com"
+    dns:
+      - 1.1.1.1
+      - 8.8.8.8
+
+    logging:
+      driver: 'json-file'
+      options:
+        max-size: '100m'
+        max-file: '10'
+
+    ports:
+      - '127.0.0.1:3000:3000/tcp'
+
+    volumes:
+      # Store sessions in the .sessions folder (comment it if you're using MongoDB)
+      - './sessions:/app/.sessions'
+
+      # Save media files
+      # https://waha.devlike.pro/docs/how-to/storages/#save-media-files-between-the-container-restarts
+      - './media:/app/.media'
+
+    env_file:
+      - .env
 
 volumes:
   postgres_data:
+  mongodb_data: {}
+  minio_data: {}
+  pg_data: {}

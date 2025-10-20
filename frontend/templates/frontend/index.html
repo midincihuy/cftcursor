@@ -1,0 +1,116 @@
+{% extends 'frontend/base.html' %}
+{% load frontend_extras %}
+{% block content %}
+<div class="card">
+    <div class="card-header">
+        Whatsapp Chat
+    </div>
+    <div class="card-body">
+        <div class="row h-100">
+            <!-- Left panel: chat list -->
+            <div class="col-4 border-end chat-list p-0 d-flex flex-column">
+                <div class="list-group list-group-flush flex-grow-1 overflow-auto">
+                    {% for chat in chats %}
+                    <a href="?chat_id={{ chat.id }}" class="list-group-item list-group-item-action {% if chat.id|stringformat:'s' == chat_id|stringformat:'s' %}active{% endif %}">
+                        <div class="fw-bold">{{ chat.name }}</div>
+                        <small class="text-muted">
+                            {% if chat.lastMessage.participant %}
+                                {{ chat.lastMessage.participant|get_profile }} :
+                            {% endif %}
+                            {{ chat.lastMessage.body|truncatechars:40 }}
+                        
+                        </small>
+                    </a>
+                    {% empty %}
+                    <div class="p-3 text-muted">No chats available.</div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Right panel: messages -->
+            <div class="col-8 d-flex flex-column">
+                <div class="flex-grow-1 overflow-auto p-3 chat-history">
+                    {% for msg in messages|dictsort:"timestamp" %}
+                    <div class="mb-3 chat-box-wrapper 
+                                {% if msg.fromMe %} text-end {% else %} text-start {% endif %}">
+                        
+                        <!-- Chat bubble -->
+                        <div class="d-inline-block p-2 rounded chat-bubble
+                                    {% if msg.fromMe %} bg-primary text-white {% else %} bg-warning {% endif %}">
+                            <div class="fw-bold small mb-1">
+                                {% if msg.participant %}
+                                    {{ msg.participant|get_profile }}
+                                {% else %}
+                                    {{ msg.from|get_profile }}
+                                {% endif %}
+                            </div>
+                            <div>{{ msg.body|render_markdown }}</div>
+                            <div class="small text-muted mt-1">
+                                {{ msg.timestamp|ts_to_date|date:"Y-m-d H:i:s" }}
+                            </div>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <div class="p-3 text-muted">No messages yet.</div>
+                    {% endfor %}
+                </div>
+
+                {% if chat_id %}
+                <div class="border-top p-2">
+                    {% csrf_token %}
+                    <input type="hidden" name="chat_id" value="{{ chat_id }}">
+                    <div class="input-group">
+                        <input type="text" name="text" class="form-control" placeholder="Type a message...">
+                        <button class="btn btn-primary">Send</button>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    const chatHistory = document.querySelector(".chat-history");
+    if (chatHistory) {
+        chatHistory.scrollTo({
+            top: chatHistory.scrollHeight,
+            behavior: "smooth"
+        });
+    }
+});
+
+// ws://127.0.0.1:3000/ws?session=default&events=message.any&x-api-key=05ea253129ce46e792172db4c85e53da
+const chatSocket = new WebSocket(
+    "ws://127.0.0.1:3000/ws?session=default&events=message.any&x-api-key=05ea253129ce46e792172db4c85e53da"
+);
+chatSocket.onmessage = function(e) {
+    const data = JSON.parse(e.data);
+    console.log(data);
+    // build a message bubble
+    const wrapper = document.createElement("div");
+    align = data.payload.fromMe ? "text-end" : "text-start";
+    wrapper.classList.add("mb-3", "chat-box-wrapper", align);
+    bg = data.payload.fromMe ? "bg-primary text-white" : "bg-warning";
+    wrapper.innerHTML = `
+        <div class="d-inline-block p-2 rounded chat-bubble ${bg}">
+            <div class="fw-bold small mb-1">${data.payload.from}</div>
+            <div class="chat-body">${data.payload.body}</div>
+            <div class="small text-muted mt-1">${data.timestamp}</div>
+        </div>
+    `;
+
+    if(data.payload.from !== "status@broadcast"){
+        // append to history
+        const chatHistory = document.querySelector(".chat-history");
+        chatHistory.appendChild(wrapper);
+
+        // auto scroll to bottom
+        chatHistory.scrollTo({
+            top: chatHistory.scrollHeight,
+            behavior: "smooth"
+        });
+    }
+};
+</script>
+{% endblock %}

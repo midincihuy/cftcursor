@@ -9,6 +9,8 @@ ALLOWED_HOSTS = ["*"]
 
 INSTALLED_APPS = [
     "reversion",
+    "frontend.apps.FrontendConfig",
+    "whatsapp",
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
@@ -66,4 +68,5 @@ USE_I18N = True
 USE_TZ = True
 
 STATIC_URL = "static/"
+
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
